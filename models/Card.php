@@ -1,48 +1,61 @@
 <?php
 
-class Card {
-    private $id;
-    private $name;
-    private $description;
-    private $category_id;
+class Card
+{
+    public $id;
+    public $name;
+    public $description;
+    public $image_url;
+    public $atk;
+    public $def;
+    public $level;
+    public $race;
+    public $created_at;
+    public $updated_at;
 
-    public function __construct($id, $name, $description, $category_id) {
+    public function __construct($id, $name, $description, $image_url, $atk, $def, $level, $race, $created_at, $updated_at)
+    {
         $this->id = $id;
         $this->name = $name;
         $this->description = $description;
-        $this->category_id = $category_id;
+        $this->image_url = $image_url;
+        $this->atk = $atk;
+        $this->def = $def;
+        $this->level = $level;
+        $this->race = $race;
+        $this->created_at = $created_at;
+        $this->updated_at = $updated_at;
     }
 
     // Getter and setter methods for each property
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
-    public function getName() {
+    public function getName()
+    {
         return $this->name;
     }
 
-    public function getDescription() {
+    public function getDescription()
+    {
         return $this->description;
     }
 
-    public function getCategoryId() {
-        return $this->category_id;
-    }
 
-    public function setId($id) {
+    public function setId($id)
+    {
         $this->id = $id;
     }
 
-    public function setName($name) {
+    public function setName($name)
+    {
         $this->name = $name;
     }
 
-    public function setDescription($description) {
+    public function setDescription($description)
+    {
         $this->description = $description;
-    }
-
-    public function setCategoryId($category_id) {
-        $this->category_id = $category_id;
     }
 }

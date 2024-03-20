@@ -2,7 +2,7 @@
 class RegisterController {
     public function showRegisterForm() {
         // Logic to display registration form
-        include 'views/header.php';
+        include 'views/header/header.php';
         include 'views/auth/register.php';
         include 'views/footer.php';
     }

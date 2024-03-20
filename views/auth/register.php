@@ -1,4 +1,4 @@
-<?php include '../header.php'; ?>
+<?php include '../header/header.php'; ?>
 <main>
     <h2>Register</h2>
     <!-- Registration form -->

@@ -2,68 +2,116 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// $password = 'admin';
+// $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+// echo $hashedPassword;
+
 // Load the necessary files
 require_once 'includes/connect.php';
 require_once 'includes/authenticate.php';
 require_once 'includes/functions.php';
 
 // Include any controllers or additional setup files here
-require_once 'controllers/HomeController.php';
-require_once 'controllers/CardController.php';
-require_once 'controllers/DeckController.php';
-require_once 'controllers/CategoryController.php';
-require_once 'controllers/ProfileController.php';
-require_once 'controllers/Auth/LoginController.php';
-require_once 'controllers/Auth/RegisterController.php';
-require_once 'controllers/Auth/ForgotPasswordController.php';
+$controllers = [
+    'Home' => 'HomeController.php',
+    'Card' => 'CardController.php',
+    'Deck' => 'DeckController.php',
+    'Category' => 'CategoryController.php',
+    'Profile' => 'ProfileController.php',
+    'Auth/Login' => 'Auth/LoginController.php',
+    'Auth/Register' => 'Auth/RegisterController.php',
+    'Auth/ForgotPassword' => 'Auth/ForgotPasswordController.php',
+    'Auth/AdminController' => 'Auth/AdminController.php',
+];
 
-// You can also include any other setup files or libraries here
-// For example, if you're using a templating engine, you might include it here
-// require_once 'path/to/templating/engine.php';
-
-// You might also include any middleware or authentication logic here
-// require_once 'path/to/middleware.php';
-
-
+// Include controller files
+foreach ($controllers as $controller => $file) {
+    require_once 'controllers/' . $file;
+}
 // Handle the request
 $base_path = str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
 $request_uri = str_replace($base_path, '', $_SERVER['REQUEST_URI']);
 $request_uri = '/' . trim($request_uri, '/');
 
 switch ($request_uri) {
-    case '/':
-        require 'views/home.php';
+    case '/home':
+        $homeController = new HomeController();
+        $homeController->index();
         break;
     case '/card-list':
-        require 'views/card-list.php';
+        $cardController = new CardController();
+        $cardController->list();
         break;
     case '/card-single':
-        require 'views/card-single.php';
+        $cardController = new CardController();
+        if (isset($_GET['id'])) {
+            $cardController->single($_GET['id']);
+        } else {
+            // Handle the case where id is not provided
+            http_response_code(400);
+            echo "Error: Card ID is required.";
+        }
         break;
     case '/deck-list':
-        require 'views/deck-list.php';
+        $deckController = new DeckController();
+        $deckController->list();
         break;
     case '/deck-single':
-        require 'views/deck-single.php';
+        $deckController = new DeckController();
+        if (isset($_GET['id'])) {
+            $deckController->single($_GET['id']);
+        } else {
+            // Handle the case where id is not provided
+            http_response_code(400);
+            echo "Error: Deck ID is required.";
+        }
         break;
     case '/category':
-        require 'views/category.php';
+        $categoryController = new CategoryController();
+        $categoryController->index();
         break;
     case '/profile':
-        require 'views/profile.php';
+        $profileController = new ProfileController();
+        $profileController->index();
         break;
-    case '/auth/login':
-        require 'views/auth/login.php';
+    case '/login':
+        $loginController = new LoginController();
+        $loginController->showLoginForm();
         break;
-    case '/auth/register':
-        require 'views/auth/register.php';
+    case '/logout':
+        $loginController = new LoginController();
+        $loginController->logout();
         break;
-    case '/auth/forgot-password':
-        require 'views/auth/forgot-password.php';
+    case '/register':
+        $registerController = new RegisterController();
+        $registerController->showRegisterForm();
         break;
+    case '/forgot-password':
+        $forgotPasswordController = new ForgotPasswordController();
+        $forgotPasswordController->showForgotPasswordForm();
+        break;
+    case '/admin_page':
+        // Check if user is logged in and is admin
+        if (isset($_SESSION['user_id'])) {
+            $userId = $_SESSION['user_id'];
+            $stmt = $db->prepare("SELECT is_admin FROM users WHERE id = :id");
+            $stmt->bindParam(':id', $userId);
+            $stmt->execute();
+            $user = $stmt->fetch();
+
+            if ($user['is_admin']) {
+                // Show admin page
+                $adminController = new AdminController();
+                $adminController->index($db);
+                break;
+            }
+        }
+
+        // If not logged in or not admin, redirect to home page
+        header('Location: /home');
+        exit;
     default:
         http_response_code(404);
         echo "404 Not Found";
         break;
 }
-?>

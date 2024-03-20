@@ -2,7 +2,7 @@
 class ForgotPasswordController {
     public function showForgotPasswordForm() {
         // Logic to display forgot password form
-        include 'views/header.php';
+        include 'views/header/header.php';
         include 'views/auth/forgot-password.php';
         include 'views/footer.php';
     }

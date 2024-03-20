@@ -1,4 +1,4 @@
-<?php include 'header.php'; ?>
+<?php include 'header/header.php'; ?>
 <main>
     <h2>Card Collection</h2>
     <!-- Display list of cards -->

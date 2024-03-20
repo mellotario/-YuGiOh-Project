@@ -1,4 +1,4 @@
-<?php include 'header.php'; ?>
+<?php include 'header/header.php'; ?>
 <main>
     <h2>Category Management</h2>
     <!-- Display category management options -->
