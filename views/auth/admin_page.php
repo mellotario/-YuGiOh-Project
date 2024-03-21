@@ -8,7 +8,7 @@ function fetchTableValues($db, $table)
     $stmt = $db->prepare("SELECT * FROM $table LIMIT 50");
     $stmt->execute();
     $values = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo "<table class='data-table' style='display: none;'>";
+    echo "<table id='$table' class='data-table' style='display: none;'>";
     echo "<thead>";
     foreach ($values[0] as $key => $value) {
         echo "<th>$key</th>";
@@ -20,9 +20,8 @@ function fetchTableValues($db, $table)
     foreach ($values as $value) {
         echo "<tr>";
         foreach ($value as $val) {
-            echo "<td><span>$val</span><input type='text' style='display:none;' value='$val'></td>";
+            echo "<td><span>$val</span></td>";
         }
-        echo "<td><button class='confirm-btn'>Update</button></td>";
         echo "<td><button>Delete</button></td>";
         echo "</tr>";
     }
@@ -32,7 +31,10 @@ function fetchTableValues($db, $table)
         echo "<button class='show-more-btn'>Show More</button>";
     }
 }
+
+
 ?>
+
 
 <main>
     <h2>Admin Page</h2>
@@ -50,16 +52,25 @@ function fetchTableValues($db, $table)
                     <div class="dropdown">
                         <button class="edit-btn">Show</button>
                         <?php fetchTableValues($db, $table); ?>
-                        <div class="add-value-container">
-                            <a href="#" class="add-value-btn">Add Value</a>
+                        <div class="add-value-container" style="display: none;">
+
+                            <input type="text" name="username" id="username_<?php echo $table; ?>" placeholder="Enter username">
+                            <input type="email" name="email" id="email_<?php echo $table; ?>" placeholder="Enter email">
+                            <input type="password" name="password" id="password_<?php echo $table; ?>" placeholder="Enter password">
+
+                            <?php if ($table === 'users') : ?>
+                                <button onclick="addUser('<?php echo $table; ?>')">Confirm User</button>
+                            <?php endif; ?>
                         </div>
+                        <?php if ($table === 'users') : ?>
+                            <a href="#" class="add-value-btn" onclick="showAddUserInputs(this)">Add User</a>
+                        <?php endif; ?>
                     </div>
                 </td>
             </tr>
         <?php endforeach; ?>
     </table>
 </main>
-
 <style>
     /* Dropdown button */
     .dropbtn {
@@ -181,43 +192,85 @@ function fetchTableValues($db, $table)
             }
         }
     });
-    // Add event listener to handle confirm button click
+
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('confirm-btn')) {
-            var row = event.target.parentElement.parentElement;
-            var cells = row.querySelectorAll('td');
-            var tableName = row.closest('table').querySelector('th').textContent.trim();
-            var id = row.querySelector('td:first-child span').textContent;
-            var values = {};
-            cells.forEach(function(cell, index) {
-                var keyElement = cell.parentElement.querySelector('th');
-                var valueElement = cell.querySelector('span');
-                if (keyElement && valueElement) {
-                    var key = keyElement.textContent;
-                    var value = valueElement.textContent;
-                    values[key] = value;
-                }
-            });
+        if (event.target.tagName === 'BUTTON' && event.target.textContent === 'Delete') {
+            var row = event.target.closest('tr');
+            var id = row.querySelector('td:first-child span').textContent.trim();
+            var tableName = row.closest('table').id; // Use the id attribute of the table
 
-
-            // Send an AJAX request to update the database
+            // Send an AJAX request to delete the record
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'update.php', true);
+            xhr.open('POST', 'delete.php', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onload = function() {
                 if (xhr.status === 200) {
-                    // Show an alert on successful update
-                    alert('Value updated successfully');
+                    // Remove the row from the table on successful deletion
+                    row.remove();
+                    alert('Record deleted successfully');
                 } else {
-                    // Show an alert on error
-                    alert('Error updating value');
+                    alert('Error deleting record');
                 }
             };
             xhr.send(JSON.stringify({
                 table: tableName,
-                id: id,
-                values: values
+                id: id
             }));
         }
     });
+
+
+    // Function to show the inputs for adding a new user
+    function showAddUserInputs(button) {
+        var container = button.parentElement.querySelector('.add-value-container');
+        if (container) {
+            container.style.display = 'block';
+        }
+    }
+
+    // Function to add a new user to the specified table
+    function addUser(tableName) {
+        // Get the input values
+        var username = document.getElementById('username_users').value;
+        var email = document.getElementById('email_users').value;
+        var password = document.getElementById('password_users').value;
+
+
+
+        if (username === '' || email === '' || password === '') {
+            console.error('Empty values detected');
+            return;
+        }
+
+        console.log(username, email, password);
+
+        // Create a FormData object with the input values
+        var formData = new FormData();
+        formData.append('username', username);
+        formData.append('email', email);
+        formData.append('password', password);
+
+        // Send an AJAX request to add the user
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'add_user.php', true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                alert('User added successfully');
+            } else {
+                alert('Error adding user');
+            }
+        };
+        xhr.send(formData);
+
+        // Reset the input fields
+        usernameInput.value = '';
+        emailInput.value = '';
+        passwordInput.value = '';
+
+        // Hide the inputs
+        var container = document.querySelector('.add-value-container');
+        if (container) {
+            container.style.display = 'none';
+        }
+    }
 </script>
