@@ -84,7 +84,6 @@
         }
     </style>
 </head>
-
 <header>
     <div class="header-container">
         <img src="assets/yugioh-eye.png" alt="Yu-Gi-Oh! Eye" class="logo">
@@ -96,11 +95,13 @@
                 <li><a href="deck-list">Decks</a></li>
                 <li><a href="category">Categories</a></li>
                 <li><a href="profile">Profile</a></li>
+                <li><a href="page-list">Page List</a></li>
                 <?php if(isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
                     <li><a href="admin_page">Admin Page</a></li>
                 <?php endif; ?>
-                <li><?php echo isset($_SESSION['is_admin']) && $_SESSION['is_admin'] ? '<a href="logout">Logout</a>' : '<a href="login">Login</a>'; ?></li>
+                <li><?php echo isset($_SESSION['user_id']) ? '<a href="logout">Logout</a>' : '<a href="login">Login</a>'; ?></li>
             </ul>
         </nav>
     </div>
 </header>
+

@@ -22,6 +22,7 @@ $controllers = [
     'Auth/Register' => 'Auth/RegisterController.php',
     'Auth/ForgotPassword' => 'Auth/ForgotPasswordController.php',
     'Auth/AdminController' => 'Auth/AdminController.php',
+    'PageList' => 'PageListController.php',
 ];
 
 // Include controller files
@@ -35,6 +36,10 @@ $request_uri = '/' . trim($request_uri, '/');
 
 switch ($request_uri) {
     case '/home':
+        $homeController = new HomeController();
+        $homeController->index();
+        break;
+    case '/':
         $homeController = new HomeController();
         $homeController->index();
         break;
@@ -90,6 +95,12 @@ switch ($request_uri) {
         $forgotPasswordController = new ForgotPasswordController();
         $forgotPasswordController->showForgotPasswordForm();
         break;
+
+    case '/page-list':
+        $pageListController = new PageListController();
+        $pageListController->index();
+        break;
+
     case '/admin_page':
         // Check if user is logged in and is admin
         if (isset($_SESSION['user_id'])) {
