@@ -48,7 +48,7 @@
 
 <script>
     function sortPages(column) {
-        let currentOrder = 'ASC'; // Default sort order
+        let currentOrder = 'ASC'; 
         let sortIndicator = document.querySelector(`th a[data-sort="${column}"]`);
         if (sortIndicator.classList.contains('asc')) {
             currentOrder = 'DESC';
