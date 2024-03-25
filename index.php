@@ -2,10 +2,6 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// $password = 'admin';
-// $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-// echo $hashedPassword;
-
 // Load the necessary files
 require_once 'includes/connect.php';
 require_once 'includes/authenticate.php';
@@ -25,11 +21,11 @@ $controllers = [
     'PageList' => 'PageListController.php',
 ];
 
-// Include controller files
+
 foreach ($controllers as $controller => $file) {
     require_once 'controllers/' . $file;
 }
-// Handle the request
+
 $base_path = str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
 $request_uri = str_replace($base_path, '', $_SERVER['REQUEST_URI']);
 $request_uri = '/' . trim($request_uri, '/');
