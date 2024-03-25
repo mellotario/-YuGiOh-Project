@@ -93,6 +93,6 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         // Initial load of page list
-        sortPages('title'); // Sort by title by default
+        sortPages('title'); 
     });
 </script>
