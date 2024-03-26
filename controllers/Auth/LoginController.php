@@ -23,6 +23,7 @@ class LoginController {
     
             if ($user && isset($user['password_hash']) && password_verify($password, $user['password_hash'])) {
                 $_SESSION['user_id'] = $user['id'];
+                $_SESSION['is_admin'] = $user['is_admin']; 
                 $redirectUrl = $user['is_admin'] ? 'admin_page' : 'home';
                 header('Location: ' . $redirectUrl);
                 exit;
