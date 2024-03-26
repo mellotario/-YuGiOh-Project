@@ -1,3 +1,11 @@
+<?php
+// Assuming you have a database connection established
+// Fetch menu items from the database
+require 'includes/connect.php';
+$stmt = $pdo->query("SELECT * FROM pages");
+$menuLinks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html>
 
@@ -15,7 +23,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            max-width: 1200px;
+            max-width: 1800px;
             margin: 0 auto;
             padding: 0 20px;
         }
@@ -84,24 +92,25 @@
         }
     </style>
 </head>
-<header>
-    <div class="header-container">
-        <img src="assets/yugioh-eye.png" alt="Yu-Gi-Oh! Eye" class="logo">
-        <h1>Welcome to <span>My Project</span></h1>
-        <nav>
-            <ul>
-                <li><a href="home">Home</a></li>
-                <li><a href="card-list">Cards</a></li>
-                <li><a href="deck-list">Decks</a></li>
-                <li><a href="category">Categories</a></li>
-                <li><a href="profile">Profile</a></li>
-                <li><a href="page-list">Page List</a></li>
-                <?php if(isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
-                    <li><a href="admin_page">Admin Page</a></li>
-                <?php endif; ?>
-                <li><?php echo isset($_SESSION['user_id']) ? '<a href="logout">Logout</a>' : '<a href="login">Login</a>'; ?></li>
-            </ul>
-        </nav>
-    </div>
-</header>
 
+<body>
+    <header>
+        <div class="header-container">
+            <img src="assets/yugioh-eye.png" alt="Yu-Gi-Oh! Eye" class="logo">
+            <h1>Welcome to <span>My Project</span></h1>
+            <nav>
+                <ul>
+                    <?php foreach ($menuLinks as $menuItem) : ?>
+                        <li><a href="/wd2/project/-YuGiOh-Project<?php echo $menuItem['url']; ?>"><?php echo $menuItem['title']; ?></a></li>
+                    <?php endforeach; ?>
+                    <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) : ?>
+                        <li><a href="admin_page">Admin Page</a></li>
+                    <?php endif; ?>
+                    <li><?php echo isset($_SESSION['user_id']) ? '<a href="logout">Logout</a>' : '<a href="login">Login</a>'; ?></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+</body>
+
+</html>

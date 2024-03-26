@@ -43,7 +43,7 @@ switch ($request_uri) {
         $cardController = new CardController();
         $cardController->list();
         break;
-    case '/card-single':
+    case '/single-card':
         $cardController = new CardController();
         if (isset($_GET['id'])) {
             $cardController->single($_GET['id']);
@@ -57,7 +57,7 @@ switch ($request_uri) {
         $deckController = new DeckController();
         $deckController->list();
         break;
-    case '/deck-single':
+    case '/single-deck':
         $deckController = new DeckController();
         if (isset($_GET['id'])) {
             $deckController->single($_GET['id']);
