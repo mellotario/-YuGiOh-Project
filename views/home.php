@@ -1,16 +1,18 @@
 <?php
-require 'includes/connect.php';
+require_once './includes/connect.php';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yu-Gi-Oh! Card Manager</title>
-<link rel="stylesheet" type="text/css" href="./assets/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yu-Gi-Oh! Card Manager</title>
+    <link rel="stylesheet" type="text/css" href="./assets/styles.css">
 
 <body>
-    
+
     <main>
         <section class="hero">
             <div class="container">
@@ -96,4 +98,5 @@ require 'includes/connect.php';
         });
     </script>
 </body>
+
 </html>

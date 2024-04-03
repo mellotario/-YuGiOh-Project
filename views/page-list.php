@@ -53,7 +53,7 @@
         if (sortIndicator.classList.contains('asc')) {
             currentOrder = 'DESC';
         }
-
+        //AJAX
         let xhr = new XMLHttpRequest();
         xhr.open('GET', `get-pages.php?sort_column=${column}&sort_order=${currentOrder}`, true);
         xhr.onload = function() {

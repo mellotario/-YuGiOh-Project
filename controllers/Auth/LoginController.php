@@ -1,7 +1,6 @@
 <?php
 class LoginController {
     public function showLoginForm($error = '') {
-        // Display login form
         include 'views/header/header.php';
         include 'views/auth/login.php';
         include 'views/footer.php';
@@ -11,7 +10,7 @@ class LoginController {
         session_start();
     
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
-            include 'includes/connect.php'; // Include your database connection file
+            include 'includes/connect.php';
     
             $username = $_POST['username'];
             $password = $_POST['password'];
@@ -43,11 +42,7 @@ class LoginController {
     }
 }
 
-// Create an instance of the LoginController
 $loginController = new LoginController();
-
-// Handle login logic
 $loginController->handleLogin();
-
 ?>
 

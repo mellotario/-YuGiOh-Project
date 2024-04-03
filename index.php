@@ -11,7 +11,6 @@ require_once 'includes/functions.php';
 $controllers = [
     'Home' => 'HomeController.php',
     'Card' => 'CardController.php',
-    'Deck' => 'DeckController.php',
     'Category' => 'CategoryController.php',
     'Profile' => 'ProfileController.php',
     'Auth/Login' => 'Auth/LoginController.php',
@@ -45,27 +44,7 @@ switch ($request_uri) {
         break;
     case '/single-card':
         $cardController = new CardController();
-        if (isset($_GET['id'])) {
-            $cardController->single($_GET['id']);
-        } else {
-            // Handle the case where id is not provided
-            http_response_code(400);
-            echo "Error: Card ID is required.";
-        }
-        break;
-    case '/deck-list':
-        $deckController = new DeckController();
-        $deckController->list();
-        break;
-    case '/single-deck':
-        $deckController = new DeckController();
-        if (isset($_GET['id'])) {
-            $deckController->single($_GET['id']);
-        } else {
-            // Handle the case where id is not provided
-            http_response_code(400);
-            echo "Error: Deck ID is required.";
-        }
+        $cardController->single();
         break;
     case '/category':
         $categoryController = new CategoryController();

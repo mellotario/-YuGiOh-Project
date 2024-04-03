@@ -1,6 +1,4 @@
 <?php
-// Assuming you have a database connection established
-// Fetch menu items from the database
 require 'includes/connect.php';
 $stmt = $pdo->query("SELECT * FROM pages");
 $menuLinks = $stmt->fetchAll(PDO::FETCH_ASSOC);
