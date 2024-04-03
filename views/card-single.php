@@ -1,8 +1,5 @@
 <?php
-include './includes/connect.php';
-
-// Check if user is logged in (for demonstration purposes)
-$isLoggedIn = true; // Assume user is logged in
+include 'C:\xampp\htdocs\wd2\project\-YuGiOh-Project\includes\connect.php';
 
 $cardName = '';
 $cardDescription = '';
@@ -10,41 +7,37 @@ $cardAtk = '';
 $cardDef = '';
 $cardLevel = '';
 $cardRace = '';
-
 if (isset($_GET['card_name']) && $_GET['card_name'] !== '') {
     $cardName = $_GET['card_name'];
 
-    // Fetch card names from the database for autocomplete
-    $stmt = $db->prepare("SELECT name FROM cards WHERE name LIKE CONCAT('%', ?, '%')");
+    // Fetch card from the database
+    $stmt = $db->prepare("SELECT * FROM cards WHERE name = ?");
     $stmt->execute([$cardName]);
-    $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $card = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $cardNames = [];
-    foreach ($results as $result) {
-        $cardNames[] = $result;
-    }
-
-    if (!empty($cardNames)) {
-        echo json_encode($cardNames);
-        exit;
-    }
-
-    $apiUrl = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?name=' . urlencode($cardName);
-    $response = file_get_contents($apiUrl);
-    $data = json_decode($response, true);
-
-    if (!empty($data['data'])) {
-        $card = $data['data'][0];
-        $cardName = $card['name'];
-        $cardDescription = $card['desc'];
+    if ($card) {
+        $cardDescription = $card['description'];
         $cardAtk = $card['atk'];
         $cardDef = $card['def'];
         $cardLevel = $card['level'];
         $cardRace = $card['race'];
+        $cardImage = $card['image_url'];
+
+        // Return card details as JSON
+        echo json_encode([
+            'name' => $cardName,
+            'description' => $cardDescription,
+            'atk' => $cardAtk,
+            'def' => $cardDef,
+            'level' => $cardLevel,
+            'race' => $cardRace,
+            'image_url' => $cardImage
+        ]);
+        exit; // Stop further execution
     }
 }
-
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -67,65 +60,35 @@ if (isset($_GET['card_name']) && $_GET['card_name'] !== '') {
             </form>
         </div>
         <div id="autocomplete"></div>
+        <div class="card-details" id="cardDetailsContainer"></div>
     </div>
 
     <script>
-        const cardNameInput = document.getElementById('card_name');
-        const autocompleteContainer = document.getElementById('autocomplete');
-
-        cardNameInput.addEventListener('input', function(event) {
-            const inputValue = event.target.value.trim();
-
-            if (inputValue.length === 0) {
-                autocompleteContainer.innerHTML = '';
-                return;
-            }
-
-            fetch(`./card-single.php?card_name=${inputValue}`)
-                .then(response => response.json())
-                .then(data => {
-                    showAutocompleteOptions(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching autocomplete options:', error);
-                });
-        });
-
-        function showAutocompleteOptions(options) {
-            autocompleteContainer.innerHTML = '';
-
-            if (options.length === 0) {
-                return;
-            }
-
-            const autocompleteList = document.createElement('ul');
-            autocompleteList.classList.add('autocomplete-list');
-
-            options.forEach(option => {
-                const listItem = document.createElement('li');
-                listItem.textContent = option.name;
-                listItem.addEventListener('click', function() {
-                    cardNameInput.value = option.name;
-                    autocompleteContainer.innerHTML = '';
-                });
-                autocompleteList.appendChild(listItem);
-            });
-
-            autocompleteContainer.appendChild(autocompleteList);
-        }
-
         document.getElementById('searchForm').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent form submission
-            const inputValue = cardNameInput.value.trim();
+            const inputValue = document.getElementById('card_name').value.trim();
 
             if (inputValue.length === 0) {
                 return;
             }
 
-            fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?name=${inputValue}`)
+            fetch(`http://localhost/wd2/project/-YuGiOh-Project/views/card-single.php?card_name=${inputValue}`)
                 .then(response => response.json())
                 .then(data => {
-                    // Handle the response
+                    if (Object.keys(data).length > 0) {
+                        const cardDetailsContainer = document.getElementById('cardDetailsContainer');
+                        cardDetailsContainer.innerHTML = `
+                            <h2>${data.name}</h2>  
+                            <img style="height:250px" src="${data.image_url}" alt="${data.name}">
+                            <p><strong>Description:</strong> ${data.description}</p>
+                            <p><strong>ATK:</strong> ${data.atk}</p>
+                            <p><strong>DEF:</strong> ${data.def}</p>
+                            <p><strong>Level:</strong> ${data.level}</p>
+                            <p><strong>Race:</strong> ${data.race}</p>
+                        `;
+                    } else {
+                        console.error('No card found with that name');
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching card details:', error);
