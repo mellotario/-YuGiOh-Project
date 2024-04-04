@@ -99,7 +99,11 @@ $menuLinks = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <nav>
                 <ul>
                     <?php foreach ($menuLinks as $menuItem) : ?>
-                        <li><a href="/wd2/project/-YuGiOh-Project<?php echo $menuItem['url']; ?>"><?php echo $menuItem['title']; ?></a></li>
+                        <?php if ($menuItem['title'] != "Admin Page") : ?>
+                            <li><a href="/wd2/project/-YuGiOh-Project<?php echo $menuItem['url']; ?>"><?php echo $menuItem['title']; ?></a></li>
+
+                        <?php endif; ?>
+
                     <?php endforeach; ?>
                     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) : ?>
                         <li><a href="admin_page">Admin Page</a></li>
