@@ -8,6 +8,12 @@ function fetchTableValues($db, $table)
     $stmt = $db->prepare("SELECT * FROM $table LIMIT 50");
     $stmt->execute();
     $values = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (empty($values)) {
+        echo "<p>No data found in the table.</p>";
+        return;
+    }
+
     echo "<table id='$table' class='data-table' style='display: none;'>";
     echo "<thead>";
     foreach ($values[0] as $key => $value) {
@@ -31,6 +37,7 @@ function fetchTableValues($db, $table)
         echo "<button class='show-more-btn'>Show More</button>";
     }
 }
+
 
 
 ?>
