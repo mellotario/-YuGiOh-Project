@@ -1,6 +1,7 @@
 <?php
 include 'C:\xampp\htdocs\wd2\project\-YuGiOh-Project\includes\connect.php';
 
+
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'name'; // Default sorting by name
 $order = isset($_GET['order']) ? $_GET['order'] : 'asc'; // Default order ascending
 
@@ -63,8 +64,15 @@ try {
 ?>
 
 <script>
+    var loggedIn = <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>;
+
     // Define the sortAndRenderCards function in the global scope
     function sortAndRenderCards(sortBy, order) {
+        if (!loggedIn) {
+            alert('You need to be logged in to sort cards.');
+            return;
+        }
+
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "views/card-list.php?sort=" + sortBy + "&order=" + order, true);
         xhr.onload = function() {
@@ -75,8 +83,6 @@ try {
         };
         xhr.send();
     }
-
-
 
     function updateSortingOptions(sortBy, order) {
         const sortingOptions = document.getElementById('sorting-options');
