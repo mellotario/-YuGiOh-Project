@@ -13,6 +13,7 @@ function outputCardDetails($cardName, $cardDescription, $cardAtk, $cardDef, $car
     echo '<p><strong>DEF:</strong> ' . $cardDef . '</p>';
     echo '<p><strong>Level:</strong> ' . $cardLevel . '</p>';
     echo '<p><strong>Race:</strong> ' . $cardRace . '</p>';
+    echo '<button id="deleteCardButton">Delete Card</button>';
 }
 
 if ($cardName !== '') {
@@ -20,7 +21,7 @@ if ($cardName !== '') {
     $stmt = $db->prepare("SELECT * FROM cards WHERE name = ?");
     $stmt->execute([$cardName]);
     $card = $stmt->fetch(PDO::FETCH_ASSOC);
-    if(!$card){
+    if (!$card) {
         $stmt = $db->prepare("SELECT * FROM user_cards WHERE name = ?");
         $stmt->execute([$cardName]);
         $card = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -33,6 +34,7 @@ if ($cardName !== '') {
         $cardLevel = $card['level'];
         $cardRace = $card['race'];
         $cardImage = $card['image_url'];
+        $cardId =  $card['id'];
 
         // If card details were fetched via search, return JSON
         if (isset($_GET['card_name'])) {
@@ -43,7 +45,8 @@ if ($cardName !== '') {
                 'def' => $cardDef,
                 'level' => $cardLevel,
                 'race' => $cardRace,
-                'image_url' => $cardImage
+                'image_url' => $cardImage,
+                'id' => $cardId,
             ]);
             exit; // Stop further execution
         } else { // If card details were redirected from another page, output HTML
@@ -93,7 +96,7 @@ if ($cardName !== '') {
                 <label for="race">Race:</label>
                 <input type="text" id="race" name="race" required><br><br>
                 <label for="image">Image:</label>
-                <input type="file" id="image" name="image" accept="image/*" required><br><br>
+                <input type="file" id="image" name="image" accept="image/*" ><br><br>
                 <button type="submit">Submit</button>
             </form>
         </div>
@@ -111,12 +114,17 @@ if ($cardName !== '') {
                 return;
             }
 
-            fetch(`http://localhost/wd2/project/-YuGiOh-Project/views/card-single.php?card_name=${inputValue}`)
+            fetchCardDetails(inputValue);
+        });
+
+        function fetchCardDetails(cardName) {
+            fetch(`http://localhost/wd2/project/-YuGiOh-Project/views/card-single.php?card_name=${cardName}`)
                 .then(response => response.json())
                 .then(data => {
                     if (Object.keys(data).length > 0) {
                         const cardDetailsContainer = document.getElementById('cardDetailsContainer');
                         cardData = data;
+                        console.log(cardData);
                         cardDetailsContainer.innerHTML = `
                     <h2>${data.name}</h2>  
                     <img style="height:250px;width:172px" src="${data.image_url}" alt="${data.name}">
@@ -125,7 +133,7 @@ if ($cardName !== '') {
                     <p><strong>DEF:</strong> ${data.def}</p>
                     <p><strong>Level:</strong> ${data.level}</p>
                     <p><strong>Race:</strong> ${data.race}</p>
-                    <button id="editCardButton">Edit Card</button>
+                    <button id="deleteCardButton">Delete Card</button>
                 `;
                     } else {
                         console.error('No card found with that name');
@@ -134,7 +142,7 @@ if ($cardName !== '') {
                 .catch(error => {
                     console.error('Error fetching card details:', error);
                 });
-        });
+        }
 
         document.getElementById('addCardButton').addEventListener('click', function() {
             isAddCardFormVisible = !isAddCardFormVisible;
@@ -169,6 +177,38 @@ if ($cardName !== '') {
                 const cardDetailsContainer = document.getElementById('cardDetailsContainer');
                 cardDetailsContainer.innerHTML = ''; // Clear existing card details
                 createEditableInputs(cardData);
+            } else {
+                const deleteButton = event.target.closest('#deleteCardButton');
+                if (deleteButton) {
+                    const cardName = cardData.name;
+                    const cardId = cardData.id;  
+                    if (confirm(`Are you sure you want to delete ${cardName}?`)) {
+                        // Send a request to delete.php to delete the card
+                        fetch('delete.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    table: 'cards', 
+                                    id: cardId 
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert(data.message);
+                                    location.reload(); // Reload the page
+                                } else {
+                                    alert(data.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error deleting card:', error);
+                                alert('An error occurred while deleting the card');
+                            });
+                    }
+                }
             }
         });
 
