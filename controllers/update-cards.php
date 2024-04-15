@@ -23,13 +23,13 @@ if ($response === false) {
             $def = isset($card['def']) ? $card['def'] : null;
             $level = isset($card['level']) ? $card['level'] : null;
             $race = isset($card['race']) ? $card['race'] : null;
+            $type = isset($card['type']) ? $card['type'] : null;
             $created_at = date('Y-m-d H:i:s');
             $updated_at = date('Y-m-d H:i:s');
 
-// Insert the card into the database if it doesn't already exist
-$stmt = $db->prepare("INSERT INTO cards (id, name, description, image_url, atk, def, level, race, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description), image_url = VALUES(image_url), atk = VALUES(atk), def = VALUES(def), level = VALUES(level), race = VALUES(race), updated_at = VALUES(updated_at)");
-$stmt->execute([$id, $name, $description, $image_url, $atk, $def, $level, $race, $created_at, $updated_at]);
-
+            // Insert the card into the database if it doesn't already exist
+            $stmt = $db->prepare("INSERT INTO cards (id, name, description, image_url, atk, def, level, race, type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description), image_url = VALUES(image_url), atk = VALUES(atk), def = VALUES(def), level = VALUES(level), race = VALUES(race), type = VALUES(type), updated_at = VALUES(updated_at)");
+            $stmt->execute([$id, $name, $description, $image_url, $atk, $def, $level, $race, $type, $created_at, $updated_at]);
         }
 
         echo json_encode(["message" => "Cards updated successfully"]);
@@ -37,4 +37,3 @@ $stmt->execute([$id, $name, $description, $image_url, $atk, $def, $level, $race,
         echo json_encode(["error" => "Failed to parse cards data"]);
     }
 }
-?>

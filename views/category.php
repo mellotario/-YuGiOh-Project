@@ -7,17 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Logic for managing categories
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    if ($action === 'create') {
-        $name = $_POST['name'];
-        // Validate input, e.g., check for empty name
-        if (!empty($name)) {
-            $stmt = $db->prepare("INSERT INTO categories (name) VALUES (?)");
-            $stmt->execute([$name]);
-        }
-    }
-}
+
 
 // Fetch existing categories (card types)
 $stmt = $db->prepare("SELECT * FROM categories");
@@ -25,15 +15,17 @@ $stmt->execute();
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Assigning categories (types) to cards
+// Assigning categories (types) to cards
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignCategory'])) {
-    $categoryId = $_POST['categoryId'];
+    $name = $_POST['categoryId']; // Updated to 'categoryName'
     $cardId = $_POST['cardId'];
     // Validate input
-    if (!empty($categoryId) && !empty($cardId)) {
+    if (!empty($name) && !empty($cardId)) {
         $stmt = $db->prepare("UPDATE cards SET type = ? WHERE id = ?");
-        $stmt->execute([$categoryId, $cardId]);
+        $stmt->execute([$name, $cardId]);
     }
 }
+
 
 // Fetch cards and their associated categories (types)
 $stmt = $db->prepare("SELECT * FROM cards");
@@ -41,7 +33,6 @@ $stmt->execute();
 $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
-
 <main>
     <h2>Category Management</h2>
     <form method="post">
@@ -55,17 +46,19 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <h3>Existing Categories:</h3>
     <ul>
         <?php foreach ($categories as $category) : ?>
-            <li class="category" data-category="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></li>
+            <li class="category" data-category="<?php echo $category['name']; ?>"><?php echo $category['name']; ?></li>
         <?php endforeach; ?>
     </ul>
 
+    <!-- Assign categories (types) to cards -->
     <!-- Assign categories (types) to cards -->
     <h3>Assign Categories to Cards:</h3>
     <form id="assignForm" method="post">
         <label for="categoryId">Category:</label>
         <select name="categoryId" id="categoryId">
+            <option value="">Select a category</option>
             <?php foreach ($categories as $category) : ?>
-                <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
+                <option value="<?php echo $category['name']; ?>"><?php echo $category['name']; ?></option>
             <?php endforeach; ?>
         </select>
         <label for="cardId">Card:</label>
@@ -76,57 +69,79 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </select>
         <button type="submit" name="assignCategory">Assign Category</button>
     </form>
+
+
+
+    <!-- Display cards for selected category -->
+    <!-- Select a category to view cards -->
+    <h3>Select a Category to View Cards:</h3>
+    <form id="selectCategoryForm" method="get">
+        <label for="category">Category:</label>
+        <select name="category" id="category">
+            <option value="">Select a category</option>
+            <?php foreach ($categories as $category) : ?>
+                <option value="<?php echo $category['name']; ?>"><?php echo $category['name']; ?></option>
+            <?php endforeach; ?>
+        </select>
+        <button type="submit">View Cards</button>
+    </form>
+    <h3>Cards for Selected Category:</h3>
+    <ul id="cardList"></ul>
 </main>
 
+
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const categoryList = document.querySelectorAll('.category');
-        const cardSelect = document.getElementById('cardId');
+        const cardList = document.getElementById('cardList');
+        const selectCategoryForm = document.getElementById('selectCategoryForm');
 
-        categoryList.forEach(category => {
-            category.addEventListener('click', function () {
-                const categoryValue = this.getAttribute('data-category');
-                fetchCardsByCategory(categoryValue);
-            });
-        });
-
-        function fetchCardsByCategory(category) {
-            fetch(`/get-cards.php?category=${category}`)
+        selectCategoryForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const selectedCategory = document.getElementById('category').value;
+            fetch(`/wd2/project/-YuGiOh-Project/get-cards.php?category=${encodeURIComponent(selectedCategory)}`)
                 .then(response => response.json())
                 .then(data => {
-                    cardSelect.innerHTML = '';
+                    cardList.innerHTML = '';
                     data.forEach(card => {
-                        const option = document.createElement('option');
-                        option.value = card.id;
-                        option.textContent = card.name;
-                        cardSelect.appendChild(option);
+                        const listItem = document.createElement('li');
+                        listItem.textContent = card.name;
+                        cardList.appendChild(listItem);
                     });
                 });
-        }
-
-        document.getElementById('assignForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const categoryId = document.getElementById('categoryId').value;
-            const cardId = document.getElementById('cardId').value;
-            // Assign category to card
-            fetch('/assign-category.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    categoryId: categoryId,
-                    cardId: cardId,
-                }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Handle response if needed
-                    console.log(data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
         });
+    });
+
+    const assignForm = document.getElementById('assignForm');
+
+    assignForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const categoryId = document.getElementById('categoryId').value;
+        const cardId = document.getElementById('cardId').value;
+        fetch(`/wd2/project/-YuGiOh-Project/assign-category.php`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    categoryId,
+                    cardId
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Log the response data
+                console.log(data);
+                // Handle the response data as needed
+                if (data.status === 'error') {
+                    alert(data.message); // Show an alert with the error message
+                } else {
+                    // Category assigned successfully, update UI or take appropriate action
+                }
+            })
+            .catch(error => {
+                // Handle errors
+                console.error('There was a problem with the fetch operation:', error);
+            });
     });
 </script>
