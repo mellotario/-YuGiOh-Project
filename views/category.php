@@ -6,7 +6,19 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Logic for managing categories
+
+// Create a new category
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create') {
+    $name = $_POST['name'];
+    // Validate input
+    if (!empty($name)) {
+        $stmt = $db->prepare("INSERT INTO categories (name) VALUES (?)");
+        $stmt->execute([$name]);
+        // Redirect to prevent form resubmission on refresh
+        header('Location: /wd2/project/-YuGiOh-Project/categories.php');
+        exit;
+    }
+}
 
 
 // Fetch existing categories (card types)
