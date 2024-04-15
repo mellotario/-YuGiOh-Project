@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     if ($action === 'create') {
-        $name = $_POST['categoryName'];
+        $name = $_POST['name'];
         // Validate input, e.g., check for empty name
         if (!empty($name)) {
             $stmt = $db->prepare("INSERT INTO categories (name) VALUES (?)");
@@ -19,30 +19,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Fetch existing categories
+// Fetch existing categories (card types)
 $stmt = $db->prepare("SELECT * FROM categories");
 $stmt->execute();
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Assigning categories to pages
+// Assigning categories (types) to cards
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignCategory'])) {
     $categoryId = $_POST['categoryId'];
-    $pageId = $_POST['pageId'];
+    $cardId = $_POST['cardId'];
     // Validate input
-    if (!empty($categoryId) && !empty($pageId)) {
-        $stmt = $db->prepare("INSERT INTO category_page (category_id, page_id) VALUES (?, ?)");
-        $stmt->execute([$categoryId, $pageId]);
+    if (!empty($categoryId) && !empty($cardId)) {
+        $stmt = $db->prepare("UPDATE cards SET type = ? WHERE id = ?");
+        $stmt->execute([$categoryId, $cardId]);
     }
 }
 
-// Fetch pages and their associated categories
-$stmt = $db->prepare("SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
-                      FROM pages p
-                      LEFT JOIN category_page cp ON p.id = cp.page_id
-                      LEFT JOIN categories c ON cp.category_id = c.id
-                      GROUP BY p.id");
+// Fetch cards and their associated categories (types)
+$stmt = $db->prepare("SELECT * FROM cards");
 $stmt->execute();
-$pages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 
@@ -50,47 +46,87 @@ $pages = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <h2>Category Management</h2>
     <form method="post">
         <input type="hidden" name="action" value="create">
-        <label for="categoryName">Category Name:</label>
-        <input type="text" id="categoryName" name="categoryName" required>
+        <label for="name">Category Name:</label>
+        <input type="text" id="name" name="name" required>
         <button type="submit">Create Category</button>
     </form>
 
-    <!-- Display existing categories -->
+    <!-- Display existing categories (card types) -->
     <h3>Existing Categories:</h3>
     <ul>
         <?php foreach ($categories as $category) : ?>
-            <li><?php echo $category['name']; ?></li>
+            <li class="category" data-category="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></li>
         <?php endforeach; ?>
     </ul>
 
-    <!-- Assign categories to pages -->
-    <h3>Assign Categories to Pages:</h3>
-    <form method="post">
+    <!-- Assign categories (types) to cards -->
+    <h3>Assign Categories to Cards:</h3>
+    <form id="assignForm" method="post">
         <label for="categoryId">Category:</label>
         <select name="categoryId" id="categoryId">
             <?php foreach ($categories as $category) : ?>
                 <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
             <?php endforeach; ?>
         </select>
-        <label for="pageId">Page:</label>
-        <select name="pageId" id="pageId">
-            <?php foreach ($pages as $page) : ?>
-                <option value="<?php echo $page['id']; ?>"><?php echo $page['title']; ?></option>
+        <label for="cardId">Card:</label>
+        <select name="cardId" id="cardId">
+            <?php foreach ($cards as $card) : ?>
+                <option value="<?php echo $card['id']; ?>"><?php echo $card['name']; ?></option>
             <?php endforeach; ?>
         </select>
         <button type="submit" name="assignCategory">Assign Category</button>
     </form>
-
-    <!-- Display pages by category -->
-    <h3>Pages by Category:</h3>
-    <?php foreach ($categories as $category) : ?>
-        <h4><?php echo $category['name']; ?></h4>
-        <ul>
-            <?php foreach ($pages as $page) : ?>
-                <?php if ($page['categories'] && strpos($page['categories'], $category['name']) !== false) : ?>
-                    <li><a href="/wd2/project/-YuGiOh-Project<?php echo $page['url']; ?>"><?php echo $page['title']; ?></a></li>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        </ul>
-    <?php endforeach; ?>
 </main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const categoryList = document.querySelectorAll('.category');
+        const cardSelect = document.getElementById('cardId');
+
+        categoryList.forEach(category => {
+            category.addEventListener('click', function () {
+                const categoryValue = this.getAttribute('data-category');
+                fetchCardsByCategory(categoryValue);
+            });
+        });
+
+        function fetchCardsByCategory(category) {
+            fetch(`/get-cards.php?category=${category}`)
+                .then(response => response.json())
+                .then(data => {
+                    cardSelect.innerHTML = '';
+                    data.forEach(card => {
+                        const option = document.createElement('option');
+                        option.value = card.id;
+                        option.textContent = card.name;
+                        cardSelect.appendChild(option);
+                    });
+                });
+        }
+
+        document.getElementById('assignForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const categoryId = document.getElementById('categoryId').value;
+            const cardId = document.getElementById('cardId').value;
+            // Assign category to card
+            fetch('/assign-category.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    categoryId: categoryId,
+                    cardId: cardId,
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle response if needed
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    });
+</script>
