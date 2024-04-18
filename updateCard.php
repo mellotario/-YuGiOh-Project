@@ -10,12 +10,39 @@ $level = isset($_POST['level']) ? $_POST['level'] : '';
 $race = isset($_POST['race']) ? $_POST['race'] : '';
 $type = isset($_POST['type']) ? $_POST['type'] : '';
 
-if ($cardName !== '') {
-    // Update the card details in the database
-    $stmt = $db->prepare("UPDATE cards SET description = ?, atk = ?, def = ?, level = ?, race = ?, type = ? WHERE name = ?");
-    $stmt->execute([$description, $atk, $def, $level, $race, $type, $cardName]);
+// Validate and sanitize input
+$cardName = validate_input($cardName);
+$description = validate_input($description);
+$atk = validate_numeric($atk);
+$def = validate_numeric($def);
+$level = validate_numeric($level);
+$race = validate_input($race);
+$type = validate_input($type);
 
-    // Check if the update was successful
+if ($cardName !== '') {
+    // Check if an image was uploaded
+    if (isset($_FILES['editImage']) && $_FILES['editImage']['error'] === UPLOAD_ERR_OK) {
+        $imageTmpName = $_FILES['editImage']['tmp_name'];
+        $imagePath = validate_image($imageTmpName, 200, 200);
+
+        // Update the card details in the cards table
+        $stmt = $db->prepare("UPDATE cards SET description = ?, atk = ?, def = ?, level = ?, race = ?, type = ?, image_url = ? WHERE name = ?");
+        $stmt->execute([$description, $atk, $def, $level, $race, $type, $imagePath, $cardName]);
+
+        // Update the card details in the user_cards table if the card exists
+        $stmt = $db->prepare("UPDATE user_cards SET description = ?, atk = ?, def = ?, level = ?, race = ?, type = ?, image_url = ? WHERE name = ?");
+        $stmt->execute([$description, $atk, $def, $level, $race, $type, $imagePath, $cardName]);
+    } else {
+        // Update the card details in the cards table
+        $stmt = $db->prepare("UPDATE cards SET description = ?, atk = ?, def = ?, level = ?, race = ?, type = ? WHERE name = ?");
+        $stmt->execute([$description, $atk, $def, $level, $race, $type, $cardName]);
+
+        // Update the card details in the user_cards table if the card exists
+        $stmt = $db->prepare("UPDATE user_cards SET description = ?, atk = ?, def = ?, level = ?, race = ?, type = ? WHERE name = ?");
+        $stmt->execute([$description, $atk, $def, $level, $race, $type, $cardName]);
+    }
+
+    // Check if any update was successful
     if ($stmt->rowCount() > 0) {
         // Return a success message
         echo json_encode(['status' => 'success']);
@@ -27,4 +54,3 @@ if ($cardName !== '') {
     // Return an error message
     echo json_encode(['status' => 'error', 'message' => 'Invalid card name']);
 }
-?>
