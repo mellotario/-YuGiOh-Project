@@ -1,6 +1,9 @@
 <?php
 include 'C:\xampp\htdocs\wd2\project\-YuGiOh-Project\includes\connect.php';
 
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'name'; // Default sorting by name
 $order = isset($_GET['order']) ? $_GET['order'] : 'asc'; // Default order ascending
@@ -38,13 +41,24 @@ try {
                 echo '<div style="border: 1px solid #ccc; padding: 10px;">';
                 // Wrap the image in a link to card-single.php with the card name as a parameter
                 echo '<a href="views/card-single.php?card_name=' . urlencode($card['name']) . '">';
-                echo '<img style="height:250px;width:172px" src="' . $card['image_url'] . '" alt="' . $card['name'] . '">';
+                if ($card['image_url']) {
+                    echo '<img style="height:250px;width:172px" src="' . $card['image_url'] . '" alt="' . $card['name'] . '">';
+                }
                 echo '</a>';
                 echo '<h2>' . $card['name'] . '</h2>';
                 echo '<p><strong>Description:</strong> ' . $card['description'] . '</p>';
                 echo '<p><strong>ATK:</strong> ' . $card['atk'] . '</p>';
                 echo '<p><strong>DEF:</strong> ' . $card['def'] . '</p>';
                 echo '<p><strong>Level:</strong> ' . $card['level'] . '</p>';
+
+                
+                if (isset($_SESSION['user_id'])) {
+                    echo '<a href="views/comments.php?card_id=' . $card['id'] . '">View Comments</a>';
+                } else{
+                    echo '<a style="pointer-events: none;cursor: default;" href="views/comments.php?card_id=' . $card['id'] . '">View Comments</a>';
+                }
+                
+
                 echo '</div>';
 
                 $counter++;
@@ -69,7 +83,7 @@ try {
     // Define the sortAndRenderCards function in the global scope
     function sortAndRenderCards(sortBy, order) {
         if (!loggedIn) {
-            alert('You need to be logged in to sort cards.');
+            alert('You need to be logged in to sort or comment cards.');
             return;
         }
 

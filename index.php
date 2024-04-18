@@ -18,6 +18,7 @@ $controllers = [
     'Auth/ForgotPassword' => 'Auth/ForgotPasswordController.php',
     'Auth/AdminController' => 'Auth/AdminController.php',
     'PageList' => 'PageListController.php',
+    'Comments' => 'CommentsController.php',
 ];
 
 
@@ -74,6 +75,11 @@ switch ($request_uri) {
     case '/page-list':
         $pageListController = new PageListController();
         $pageListController->index();
+        break;
+
+    case '/comments':
+        $commentsController = new CommentsController();
+        $commentsController->index();
         break;
 
     case '/admin_page':
