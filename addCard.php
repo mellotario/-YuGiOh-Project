@@ -1,38 +1,26 @@
 <?php
 include_once 'includes/connect.php';
+include_once 'includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Generate a unique ID
-    $stmt = $db->prepare("SELECT MAX(id) AS max_id FROM user_cards");
-    $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $id = $row['max_id'] !== null ? $row['max_id'] + 5 : 1;
+    // Validate and sanitize input data
+    $name = validate_input($_POST['name']);
+    $description = validate_input($_POST['description']);
+    $atk = validate_numeric($_POST['atk']);
+    $def = validate_numeric($_POST['def']);
+    $level = validate_numeric($_POST['level']);
+    $race = validate_input($_POST['race']);
 
-    // Assuming the form fields are named 'name', 'description', 'atk', 'def', 'level', 'race', and 'image'
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $atk = $_POST['atk'];
-    $def = $_POST['def'];
-    $level = $_POST['level'];
-    $race = $_POST['race'];
-
-    // Handle image upload and resizing
-    $image = $_FILES['image']['name'];
-    $image_temp = $_FILES['image']['tmp_name'];
-    $upload_dir = 'uploads'; // Change this to your desired upload directory
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir);
+    // Validate image upload
+    $image = isset($_FILES['image']) && $_FILES['image']['error'] == UPLOAD_ERR_OK ? $_FILES['image']['name'] : null;
+    $image_temp = isset($_FILES['image']) && $_FILES['image']['error'] == UPLOAD_ERR_OK ? $_FILES['image']['tmp_name'] : null;
+    if ($image && $image_temp) {
+        $image = validate_image($image_temp, 200, 200);
     }
-    $target_file = "{$upload_dir}/{$image}";
-
-    // Resize the image
-    $resizedImage = resizeImage($image_temp, 200, 200);
-    imagejpeg($resizedImage, $target_file);
-    imagedestroy($resizedImage);
 
     // Insert the new card into the database
-    $stmt = $db->prepare("INSERT INTO user_cards (id, name, description, atk, def, level, race, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    if ($stmt->execute([$id, $name, $description, $atk, $def, $level, $race, $target_file])) {
+    $stmt = $db->prepare("INSERT INTO user_cards (name, description, atk, def, level, race, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    if ($stmt->execute([$name, $description, $atk, $def, $level, $race, $image])) {
         // Return a success message
         http_response_code(200);
         echo json_encode(['message' => 'Card added successfully']);
@@ -46,13 +34,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     http_response_code(405);
     echo json_encode(['message' => 'Method Not Allowed']);
 }
-
-function resizeImage($imagePath, $width, $height)
-{
-    $sourceImage = imagecreatefromjpeg($imagePath);
-    $resizedImage = imagecreatetruecolor($width, $height);
-    imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $width, $height, imagesx($sourceImage), imagesy($sourceImage));
-    imagedestroy($sourceImage);
-    return $resizedImage;
-}
 ?>
+
