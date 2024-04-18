@@ -98,7 +98,11 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <button type="submit">View Cards</button>
     </form>
     <h3>Cards for Selected Category:</h3>
-    <ul id="cardList"></ul>
+    <ul id="cardList">
+        <?php foreach ($cards as $card) : ?>
+            <li><a href="/wd2/project/-YuGiOh-Project/views/card-single.php?card_name=<?php echo urlencode($card['name']); ?>"><?php echo $card['name']; ?></a></li>
+        <?php endforeach; ?>
+    </ul>
 </main>
 
 
@@ -117,7 +121,10 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     cardList.innerHTML = '';
                     data.forEach(card => {
                         const listItem = document.createElement('li');
-                        listItem.textContent = card.name;
+                        const link = document.createElement('a');
+                        link.href = `/wd2/project/-YuGiOh-Project/views/card-single.php?card_name=${encodeURIComponent(card.name)}`;
+                        link.textContent = card.name;
+                        listItem.appendChild(link);
                         cardList.appendChild(listItem);
                     });
                 });

@@ -7,12 +7,17 @@ $cardName = isset($_GET['card_name']) ? urldecode($_GET['card_name']) : '';
 function outputCardDetails($cardName, $cardDescription, $cardAtk, $cardDef, $cardLevel, $cardRace, $cardImage)
 {
     echo '<h2>' . $cardName . '</h2>';
-    echo '<img style="height:250px;width:172px" src="' . $cardImage . '" alt="' . $cardName . '">';
+    if (!empty($cardImage)) {
+        echo '<img style="height:250px;width:172px" src="' . $cardImage . '" alt="' . $cardName . '">';
+    } else {
+        echo '<p>Card with no image</p>';
+    }
     echo '<p><strong>Description:</strong> ' . $cardDescription . '</p>';
     echo '<p><strong>ATK:</strong> ' . $cardAtk . '</p>';
     echo '<p><strong>DEF:</strong> ' . $cardDef . '</p>';
     echo '<p><strong>Level:</strong> ' . $cardLevel . '</p>';
-    echo '<p><strong>Race:</strong> ' . $cardRace . '</p>';
+    echo '<p><strong>Type:</strong> ' . $cardRace . '</p>';
+    echo '<button id="editCardButton">Edit Card</button>';
     echo '<button id="deleteCardButton">Delete Card</button>';
 }
 
@@ -93,10 +98,10 @@ if ($cardName !== '') {
                 <input type="number" id="def" name="def" required><br><br>
                 <label for="level">Level:</label>
                 <input type="number" id="level" name="level" required><br><br>
-                <label for="race">Race:</label>
+                <label for="race">Type:</label>
                 <input type="text" id="race" name="race" required><br><br>
                 <label for="image">Image:</label>
-                <input type="file" id="image" name="image" accept="image/*" ><br><br>
+                <input type="file" id="image" name="image" accept="image/*"><br><br>
                 <button type="submit">Submit</button>
             </form>
         </div>
@@ -125,14 +130,21 @@ if ($cardName !== '') {
                         const cardDetailsContainer = document.getElementById('cardDetailsContainer');
                         cardData = data;
                         console.log(cardData);
+                        let imageHtml = '';
+                        if (data.image_url) {
+                            imageHtml = `<img style="height:250px;width:172px" src="${data.image_url}" alt="${data.name}">`;
+                        } else {
+                            imageHtml = '<p>Card with no image</p>';
+                        }
                         cardDetailsContainer.innerHTML = `
                     <h2>${data.name}</h2>  
-                    <img style="height:250px;width:172px" src="${data.image_url}" alt="${data.name}">
+                    ${imageHtml}
                     <p><strong>Description:</strong> ${data.description}</p>
                     <p><strong>ATK:</strong> ${data.atk}</p>
                     <p><strong>DEF:</strong> ${data.def}</p>
                     <p><strong>Level:</strong> ${data.level}</p>
-                    <p><strong>Race:</strong> ${data.race}</p>
+                    <p><strong>Type:</strong> ${data.race}</p>
+                    <button id="editCardButton">Edit Card</button>
                     <button id="deleteCardButton">Delete Card</button>
                 `;
                     } else {
@@ -149,28 +161,6 @@ if ($cardName !== '') {
             document.getElementById('addCardFormContainer').style.display = isAddCardFormVisible ? 'block' : 'none';
         });
 
-        document.getElementById('addCardForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent form submission
-
-            const form = document.getElementById('addCardForm');
-            const formData = new FormData(form);
-
-            // Use AJAX to submit the form
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'addCard.php', true);
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        alert('Card added successfully');
-                        location.reload();
-                    } else {
-                        console.error('Error adding card:', xhr.statusText);
-                    }
-                }
-            };
-            xhr.send(formData);
-        });
-
         document.addEventListener('click', function(event) {
             const editButton = event.target.closest('#editCardButton');
             if (editButton) {
@@ -181,7 +171,7 @@ if ($cardName !== '') {
                 const deleteButton = event.target.closest('#deleteCardButton');
                 if (deleteButton) {
                     const cardName = cardData.name;
-                    const cardId = cardData.id;  
+                    const cardId = cardData.id;
                     if (confirm(`Are you sure you want to delete ${cardName}?`)) {
                         // Send a request to delete.php to delete the card
                         fetch('delete.php', {
@@ -190,8 +180,8 @@ if ($cardName !== '') {
                                     'Content-Type': 'application/json'
                                 },
                                 body: JSON.stringify({
-                                    table: 'cards', 
-                                    id: cardId 
+                                    table: 'cards',
+                                    id: cardId
                                 })
                             })
                             .then(response => response.json())
@@ -210,76 +200,72 @@ if ($cardName !== '') {
                     }
                 }
             }
+
+            const deleteImageButton = event.target.closest('#deleteImageButton');
+            if (deleteImageButton) {
+                if (confirm('Are you sure you want to delete the image?')) {
+                    // Send a request to delete the image
+                    fetch('deleteImage.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                card_id: cardData.id
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                location.reload(); // Reload the page
+                            } else {
+                                alert(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error deleting image:', error);
+                            alert('An error occurred while deleting the image');
+                        });
+                }
+            }
         });
 
         function createEditableInputs(data) {
-            if (data && Object.keys(data).length > 0) {
-                const cardDetailsContainer = document.getElementById('cardDetailsContainer');
-                cardDetailsContainer.innerHTML = `
-            <h2>${data.name}</h2>  
-            <img style="height:250px" src="${data.image_url}" alt="${data.name}">
-            <p><strong>Description:</strong> ${data.description}</p>
-            <p><strong>ATK:</strong> ${data.atk}</p>
-            <p><strong>DEF:</strong> ${data.def}</p>
-            <p><strong>Level:</strong> ${data.level}</p>
-            <p><strong>Race:</strong> ${data.race}</p>
-        `;
+            const cardDetailsContainer = document.getElementById('cardDetailsContainer');
+            cardDetailsContainer.innerHTML = ''; // Clear existing card details
 
-                // Add an Edit button
+            let imageHtml = '';
+            if (data.image_url) {
+                imageHtml = `<img style="height:250px;width:172px" src="${data.image_url}" alt="${data.name}">`;
+            } else {
+                imageHtml = '<p>Card with no image</p>';
+            }
+
+            cardDetailsContainer.innerHTML = `
+        <h2>${data.name}</h2>  
+        ${imageHtml}
+        <p><strong>Description:</strong> ${data.description}</p>
+        <p><strong>ATK:</strong> ${data.atk}</p>
+        <p><strong>DEF:</strong> ${data.def}</p>
+        <p><strong>Level:</strong> ${data.level}</p>
+        <p><strong>Type:</strong> ${data.race}</p>
+    `;
+
+            // Add Edit and Delete buttons if they don't already exist
+            if (!document.getElementById('editCardButton')) {
                 const editButton = document.createElement('button');
                 editButton.innerText = 'Edit Card';
-                editButton.addEventListener('click', function() {
-                    // Create editable inputs for card details
-                    cardDetailsContainer.innerHTML = `
-                <input type="text" id="editName" value="${data.name}">
-                <textarea name="editDescription" rows="4" id="editDescription">${data.description}</textarea>
-                <input type="number" id="editAtk" value="${data.atk}">
-                <input type="number" id="editDef" value="${data.def}">
-                <input type="number" id="editLevel" value="${data.level}">
-                <input type="text" id="editRace" value="${data.race}">
-                <button id="saveButton">Save Changes</button>
-                <button id="cancelButton">Cancel</button>
-            `;
-
-                    // Handle save and cancel button clicks
-                    document.getElementById('saveButton').addEventListener('click', function() {
-                        saveChanges(data.name);
-                    });
-
-                    document.getElementById('cancelButton').addEventListener('click', function() {
-                        createEditableInputs(data);
-                    });
-                });
-
+                editButton.id = 'editCardButton';
                 cardDetailsContainer.appendChild(editButton);
-            } else {
-                console.error('No card found with that name');
             }
-        }
 
-        function saveChanges(cardName) {
-            const editedName = document.getElementById('editName').value;
-            const editedDescription = document.getElementById('editDescription').value;
-            const editedAtk = document.getElementById('editAtk').value;
-            const editedDef = document.getElementById('editDef').value;
-            const editedLevel = document.getElementById('editLevel').value;
-            const editedRace = document.getElementById('editRace').value;
-
-            // Update the card details in the database
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'updateCard.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        alert('Card updated successfully');
-                        location.reload(); // Reload the page
-                    } else {
-                        console.error('Error updating card:', xhr.statusText);
-                    }
-                }
-            };
-            xhr.send(`name=${cardName}&description=${editedDescription}&atk=${editedAtk}&def=${editedDef}&level=${editedLevel}&race=${editedRace}`);
+            if (!document.getElementById('deleteCardButton')) {
+                const deleteButton = document.createElement('button');
+                deleteButton.innerText = 'Delete Card';
+                deleteButton.id = 'deleteCardButton';
+                cardDetailsContainer.appendChild(deleteButton);
+            }
         }
     </script>
 </body>
