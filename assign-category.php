@@ -1,11 +1,11 @@
 <?php
 include_once 'includes/connect.php'; // Include database connection
-
+include_once 'includes/functions.php';
 // Check if the request is a POST request and if the assignCategory parameter is set
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
-    $categoryId = $data['categoryId'];
-    $cardId = $data['cardId'];
+    $categoryId = validate_numeric($data['categoryId']);
+    $cardId = validate_numeric($data['cardId']);
 
     // Validate input
     if (!empty($categoryId) && !empty($cardId)) {
