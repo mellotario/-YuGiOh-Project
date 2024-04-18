@@ -25,10 +25,11 @@ function fetchTableValues($db, $table)
     echo "<tbody>";
     foreach ($values as $value) {
         echo "<tr>";
-        foreach ($value as $val) {
-            echo "<td><span>$val</span></td>";
+        foreach ($value as $key => $val) {
+            echo "<td><span>$val</span><input type='text' class='edit-input' style='display: none;' value='$val'></td>";
         }
-        echo "<td><button>Delete</button></td>";
+        echo "<td><button class='edit-btn'>Edit</button></td>";
+        echo "<td><button class='delete-btn'>Delete</button></td>";
         echo "</tr>";
     }
     echo "</tbody>";
@@ -37,7 +38,6 @@ function fetchTableValues($db, $table)
         echo "<button class='show-more-btn'>Show More</button>";
     }
 }
-
 
 
 ?>
@@ -127,6 +127,8 @@ function fetchTableValues($db, $table)
 </style>
 
 <script>
+
+    
     // Add event listener to handle edit button click and add value button click
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('edit-btn')) {
@@ -280,4 +282,55 @@ function fetchTableValues($db, $table)
             container.style.display = 'none';
         }
     }
+
+
+    document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('edit-btn') && event.target.textContent === 'OK') {
+        var row = event.target.closest('tr');
+        var cells = row.querySelectorAll('td');
+
+        // Extract the updated values from the input fields
+        var updatedValues = [];
+        cells.forEach(function(cell, index) {
+            var span = cell.querySelector('span');
+            var input = cell.querySelector('input');
+            if (span && input) {
+                if (index !== cells.length - 2) { // Skip the last two columns (action columns)
+                    span.textContent = input.value;
+                    updatedValues.push(input.value);
+                }
+            }
+        });
+
+        // Perform an AJAX request to update the user in the database
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'update_user.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                alert('User updated successfully');
+            } else {
+                alert('Error updating user');
+            }
+        };
+        xhr.send(JSON.stringify({
+            id: cells[0].querySelector('span').textContent.trim(),
+            updatedValues: updatedValues
+        }));
+
+        // Change the button text back to "Edit"
+        event.target.textContent = 'Edit';
+
+        // Hide the input fields
+        cells.forEach(function(cell) {
+            var span = cell.querySelector('span');
+            var input = cell.querySelector('input');
+            if (span && input) {
+                span.style.display = 'inline';
+                input.style.display = 'none';
+            }
+        });
+    }
+});
+
 </script>
