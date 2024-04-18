@@ -15,31 +15,51 @@ if (!$card) {
     exit;
 }
 
-if (isset($_SESSION['user_id'])) {
-    // User is logged in
-    $isLoggedIn = true;
-    // Get the username from the session
-    $name = $_SESSION['username'];
-} else {
-    $isLoggedIn = false;
-    // User is not logged in
-    // Use the name entered in the form
-    $name = isset($_POST['name']) ? $_POST['name'] : '';
-}
+$isLoggedIn = isset($_SESSION['user_id']);
+$name = $isLoggedIn ? $_SESSION['username'] : (isset($_POST['name']) ? htmlspecialchars($_POST['name']) : '');
+
+$errors = [];
 
 // Check if the form was submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Handle form submission (insert comment into database)
-    $comment = isset($_POST['comment']) ? $_POST['comment'] : '';
+    // Validate input
+    $comment = isset($_POST['comment']) ? htmlspecialchars($_POST['comment']) : '';
+    if (empty($comment)) {
+        $errors[] = 'Comment is required.';
+    }
 
-    // Insert the comment into the database
-    $stmt = $pdo->prepare("INSERT INTO comments (card_id, name, content, created_at) VALUES (:card_id, :name, :comment, NOW())");
-    $stmt->execute(['card_id' => $cardId, 'name' => $name, 'comment' => $comment]);
+    // Validate CAPTCHA
+    session_start();
+    $captcha = isset($_POST['captcha']) ? trim($_POST['captcha']) : '';
+    if (empty($captcha) || $_SESSION['captcha'] !== $captcha) {
+        $errors[] = 'CAPTCHA is incorrect.';
+    }
+    
 
-    // Redirect back to the comments page to prevent form resubmission
-    header('Location: comments.php?card_id=' . $cardId);
-    exit;
+    if (empty($errors)) {
+        // Insert the comment into the database
+        $stmt = $pdo->prepare("INSERT INTO comments (card_id, name, content, created_at) VALUES (:card_id, :name, :comment, NOW())");
+        $stmt->execute(['card_id' => $cardId, 'name' => $name, 'comment' => $comment]);
+
+        // Redirect back to the comments page to prevent form resubmission
+        header('Location: comments.php?card_id=' . $cardId);
+        exit;
+    }
 }
+
+// Generate a random CAPTCHA code
+function generateCaptcha() {
+    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    $length = 6;
+    $captcha = '';
+    for ($i = 0; $i < $length; $i++) {
+        $captcha .= $chars[rand(0, strlen($chars) - 1)];
+    }
+    return $captcha;
+}
+
+// Store the CAPTCHA code in the session
+$_SESSION['captcha'] = generateCaptcha();
 
 // Fetch comments for this card from the database
 $stmt = $pdo->prepare("SELECT * FROM comments WHERE card_id = :card_id ORDER BY created_at DESC");
@@ -67,16 +87,26 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <div>
             <h2>Submit a Comment</h2>
+            <?php if (!empty($errors)) : ?>
+                <ul style="color: red;">
+                    <?php foreach ($errors as $error) : ?>
+                        <li><?php echo $error; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
             <form action="" method="post">
                 <?php if (!$isLoggedIn) : ?>
                     <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" required><br>
+                    <input type="text" id="name" name="name" value="<?php echo $name; ?>" required><br>
                 <?php else : ?>
                     <input type="hidden" id="name" name="name" value="<?php echo $name; ?>">
                     <p><strong>Logged in as:</strong> <?php echo $name; ?></p>
                 <?php endif; ?>
                 <label for="comment">Comment:</label><br>
-                <textarea id="comment" name="comment" rows="4" cols="50" required></textarea><br>
+                <textarea id="comment" name="comment" rows="4" cols="50" required><?php echo isset($_POST['comment']) ? htmlspecialchars($_POST['comment']) : ''; ?></textarea><br>
+                <label for="captcha">CAPTCHA:</label><br>
+                <img src="captcha.php" alt="CAPTCHA"><br>
+                <input type="text" id="captcha" name="captcha" required><br>
                 <button type="submit">Submit Comment</button>
             </form>
         </div>
