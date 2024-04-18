@@ -1,13 +1,13 @@
 <?php
 include_once 'includes/connect.php';
-
+include_once 'includes/functions.php';
 // Get the posted data
 $data = json_decode(file_get_contents("php://input"));
 
 // Check if data is valid
 if (!empty($data->table) && !empty($data->id)) {
-    $table = $data->table;
-    $id = $data->id;
+    $table = validate_input($data->table);
+    $id = validate_numeric($data->id);
 
     // Check if the table exists in the database
     $stmt = $db->prepare("SHOW TABLES LIKE :table");
